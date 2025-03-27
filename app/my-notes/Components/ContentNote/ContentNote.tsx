@@ -83,7 +83,7 @@ export async function saveNoteInDB(
 function ContentNote() {
   const {
     openContentNoteObject: { openContentNote, setOpenContentNote },
-    isMobileObject: { isMobile, setIsMobile },
+    isMobileObject: { isMobile },
     selectedNoteObject: { selectedNote, setSelectedNote },
     isNewNoteObject: { isNewNote, setIsNewNote },
     allNotesObject: { allNotes, setAllNotes },
@@ -94,14 +94,28 @@ function ContentNote() {
   const [singleNote, setSingleNote] = useState<SingleNoteType | undefined>(
     undefined
   );
+
+  // Initialize new note when creating
   useEffect(() => {
-    //If openContentNote is true
-    if (openContentNote) {
-      if (selectedNote) {
-        setSingleNote(selectedNote);
-      }
+    if (openContentNote && isNewNote) {
+      const newNote: SingleNoteType = {
+        _id: uuidv4(),
+        title: "",
+        description: "",
+        code: "",
+        language: "javascript",
+        tags: [],
+        userId: "demo-user",
+        creationDate: new Date().toISOString(),
+        isFavorite: false,
+        isTrash: false,
+      };
+      setSelectedNote(newNote);
+      setSingleNote(newNote);
+    } else if (openContentNote && selectedNote) {
+      setSingleNote(selectedNote);
     }
-  }, [openContentNote, selectedNote]);
+  }, [openContentNote, selectedNote, isNewNote]);
 
   useEffect(() => {
     if (singleNote && singleNote.title !== "") {
@@ -112,56 +126,10 @@ function ContentNote() {
   const debouncedSaveNote = useMemo(
     () =>
       debounce((note: SingleNoteType, isNew: boolean) => {
-        saveNoteInDB(note, isNew);
+        saveNoteInDB(note, isNew, setAllNotes, setSingleNote, setIsNewNote);
       }, 500),
     []
   );
-
-  async function saveNoteInDB(note: SingleNoteType, isNew: boolean) {
-    const url = isNew ? "/api/snippets" : `/api/snippets?snippetId=${note._id}`;
-    const method = isNew ? "POST" : "PUT";
-    const { _id, ...noteData } = note;
-    const body = isNew ? JSON.stringify(noteData) : JSON.stringify(note);
-
-    try {
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: body,
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const savedNote = isNew ? { ...note, _id: data.notes._id } : note;
-
-      setAllNotes((prevNotes) => {
-        const updatedNotes = isNew
-          ? [...prevNotes, savedNote]
-          : prevNotes.map((n) => (n._id === savedNote._id ? savedNote : n));
-
-        if (isNew) {
-          return updatedNotes.sort(
-            (a, b) =>
-              new Date(b.creationDate).getTime() -
-              new Date(a.creationDate).getTime()
-          );
-        }
-        return updatedNotes;
-      });
-
-      if (isNew) {
-        setSingleNote(savedNote);
-        setIsNewNote(false);
-      }
-    } catch (error) {
-      console.error("Error saving note:", error);
-    }
-  }
 
   useEffect(() => {
     if (selectedLanguage && singleNote) {
@@ -185,11 +153,16 @@ function ContentNote() {
 
   return (
     <div
-      className={`  ${isMobile ? "w-4/5 mt-[50%] shadow-lg h-[1040px]" : "w-1/2"}  p-6 z-30   rounded-lg ${openContentNote ? "block " : "hidden"} h-[100%] pb-9
-      ${isMobile ? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" : ""} ${darkMode[1].isSelected ? "bg-slate-800" : "bg-white"} `}
+      className={`h-full ${
+        isMobile 
+          ? "w-[90%] mx-auto mt-[10vh] rounded-lg shadow-lg"
+          : "w-full"
+      } p-6 ${
+        darkMode[1].isSelected ? "bg-slate-800" : "bg-white"
+      }`}
     >
       {singleNote && (
-        <div>
+        <div className="h-full overflow-y-auto">
           <ContentNoteHeader
             singleNote={singleNote}
             setSingleNote={setSingleNote}
@@ -388,7 +361,7 @@ function NoteTags({
   interface SingleTagType {
     _id: string;
     name: string;
-    clerkUserId: string;
+    userId: string;
   }
   function TagsMenu({
     onClickedTag,

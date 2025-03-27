@@ -50,16 +50,20 @@ function NotesArea() {
   const {
     openContentNoteObject: { openContentNote },
     isMobileObject: { isMobile },
+    darkModeObject: { darkMode },
   } = useGlobalContext();
+  
   return (
-    <div className=" flex gap-2 mt-5">
-      <div
-        className={`${openContentNote ? `${isMobile ? "w-full" : "w-[50%]"}` : "w-full"}`}
-      >
+    <div className="relative flex gap-2 mt-5">
+      <div className={`${openContentNote ? (isMobile ? "hidden" : "w-[50%]") : "w-full"}`}>
         <SwiperSelection />
         <AllNotesSection />
       </div>
-      <ContentNote />
+      <div className={`${openContentNote ? "block" : "hidden"} ${
+        isMobile ? "fixed inset-0 z-50 bg-black/20" : "relative w-[50%]"
+      }`}>
+        <ContentNote />
+      </div>
     </div>
   );
 }

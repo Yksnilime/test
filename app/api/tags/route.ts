@@ -1,101 +1,83 @@
-import connect from "@/app/lib/connect";
-
-import Tag from "@/app/Models/TagSchema";
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
+import Tag from "@/app/Models/TagSchema";
+
+const MONGODB_URI = process.env.MONGODB_URI || "";
+
+if (!MONGODB_URI) {
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env.local"
+  );
+}
+
 export async function POST(req: Request) {
   try {
-    const { name, clerkUserId } = await req.json();
+    await mongoose.connect(MONGODB_URI);
+    const { name } = await req.json();
 
-    await connect();
-
-    const tag = new Tag({
+    const tag = await Tag.create({
       name,
-      clerkUserId,
+      userId: "demo-user",
     });
 
-    const savedTag = await tag.save();
-
-    return NextResponse.json({ tags: savedTag });
-  } catch (error) {
-    console.log(error);
-
-    return NextResponse.json({ error: error }, { status: 400 });
+    return NextResponse.json({ tag });
+  } catch (error: any) {
+    return NextResponse.json({ error }, { status: 500 });
   }
 }
 
-export async function GET(req: any) {
+export async function GET(req: Request) {
   try {
-    const clerkId = req.nextUrl.searchParams.get("clerkId");
-    await connect();
-    const tags = await Tag.find({ clerkUserId: clerkId });
-    return NextResponse.json({ tags: tags });
-  } catch (error) {
-    return NextResponse.json({ error: error }, { status: 400 });
+    await mongoose.connect(MONGODB_URI);
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId") || "demo-user";
+
+    const tags = await Tag.find({ userId });
+
+    return NextResponse.json({ tags });
+  } catch (error: any) {
+    return NextResponse.json({ error }, { status: 500 });
   }
 }
 
-export async function PUT(request: any) {
+export async function PUT(req: Request) {
   try {
-    const tagId = request.nextUrl.searchParams.get("tagId");
-    const { name, clerkUserId } = await request.json();
+    await mongoose.connect(MONGODB_URI);
+    const { name, _id } = await req.json();
 
-    if (!tagId) {
-      return NextResponse.json(
-        { message: "tag ID is required" },
-        { status: 400 }
-      );
+    if (!_id) {
+      return NextResponse.json({ error: "Tag ID is required" }, { status: 400 });
     }
 
-    // Connect to the database
-    await connect();
-
-    // Find the snippet by snippet and update it
-    const updatedTag = await Tag.findOneAndUpdate(
-      { _id: tagId },
+    const tag = await Tag.findByIdAndUpdate(
+      _id,
       {
-        $set: {
-          name,
-          clerkUserId,
-        },
+        name,
+        userId: "demo-user",
       },
-      { returnDocument: "after" } // Return the updated document
+      { new: true }
     );
 
-    console.log(updatedTag);
-
-    return NextResponse.json({
-      note: updatedTag,
-    });
-  } catch (error) {
-    console.error("Error updating the tag:", error);
-    return NextResponse.json({ status: 500 });
+    return NextResponse.json({ tag });
+  } catch (error: any) {
+    return NextResponse.json({ error }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(req: Request) {
   try {
-    const url = new URL(request.url);
-    const tagId = url.searchParams.get("tagId");
+    await mongoose.connect(MONGODB_URI);
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
 
-    if (!tagId) {
-      return NextResponse.json(
-        { message: "tagId is required" },
-        { status: 400 }
-      );
+    if (!id) {
+      return NextResponse.json({ error: "Tag ID is required" }, { status: 400 });
     }
 
-    const tagToDelete = await Tag.findOneAndDelete({ _id: tagId });
+    await Tag.findByIdAndDelete(id);
 
-    if (!tagToDelete) {
-      return NextResponse.json({ message: "tag not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ message: "tag deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting tag:", error); // Log the error for debugging
-    return NextResponse.json(
-      { message: "Failed to delete tag" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Tag deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json({ error }, { status: 500 });
   }
 }

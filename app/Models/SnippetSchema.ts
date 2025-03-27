@@ -7,19 +7,20 @@ const SingleTagSchema = new Schema(
       type: String,
       required: true,
     },
-    clerkUserId: {
+    userId: {
       type: String,
       required: true,
+      default: "demo-user",
     },
   },
   { _id: false }
 );
 
 const SingleSnippetSchema = new mongoose.Schema({
-  clerkUserId: {
+  userId: {
     type: String,
     required: true,
-    default: "",
+    default: "demo-user",
   },
   title: {
     type: String,

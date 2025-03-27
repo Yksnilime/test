@@ -3,8 +3,8 @@
 import DataObjectIcon from "@mui/icons-material/DataObject";
 import { mainColor } from "@/Colors";
 import Link from "next/link";
-import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
+
 export default function Home() {
   return (
     <div className="poppins">
@@ -47,35 +47,15 @@ function Logo() {
 }
 
 function Buttons() {
-  const { userId } = useAuth();
   return (
     <div className="max-sm:w-full">
-      {userId ? (
-        <Link href="/my-notes">
-          <button
-            className={`max-sm:w-full  bg-purple-600 p-[8px] px-6 text-sm text-white rounded-md`}
-          >
-            Access To The App
-          </button>
-        </Link>
-      ) : (
-        <div className="flex gap-2 max-sm:flex-col max-sm:w-full max-sm:mt-8">
-          <button
-            className={`max-sm:w-full  bg-purple-600 p-[8px] px-6 text-sm text-white rounded-md`}
-          >
-            <Link href="/sign-in"> Sign In</Link>
-          </button>
-
-          <Link href="/sign-up">
-            <button
-              className={` max-sm:w-full text-sm border border-purple-600 text-purple-600 
-      hover:bg-purple-600 hover:text-white p-[8px] px-6 rounded-md`}
-            >
-              Sign Up
-            </button>
-          </Link>
-        </div>
-      )}
+      <Link href="/my-notes">
+        <button
+          className={`max-sm:w-full  bg-purple-600 p-[8px] px-6 text-sm text-white rounded-md`}
+        >
+          Access To The App
+        </button>
+      </Link>
     </div>
   );
 }
@@ -93,12 +73,14 @@ function CTASection() {
         code and more time writing it.
       </p>
 
-      <button
-        className={`block   px-9 py-3 text-sm font-medium text-white transition   focus:outline-none  `}
-        type="button"
-      >
-        {`Let's get started!`}
-      </button>
+      <Link href="/my-notes">
+        <button
+          className={`block   px-9 py-3 text-sm font-medium text-white transition   focus:outline-none  `}
+          type="button"
+        >
+          {`Let's get started!`}
+        </button>
+      </Link>
     </div>
   );
 }

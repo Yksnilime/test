@@ -6,12 +6,18 @@ const SingleTagSchema = new Schema({
     type: String,
     required: true,
   },
-  clerkUserId: {
+  userId: {
     type: String,
     required: true,
+    default: "demo-user",
   },
 });
 
-const Tag = mongoose.models.Tag || mongoose.model("Tag", SingleTagSchema);
+// Delete the model if it exists to force a refresh
+if (mongoose.models.Tag) {
+  delete mongoose.models.Tag;
+}
+
+const Tag = mongoose.model("Tag", SingleTagSchema);
 
 export default Tag;

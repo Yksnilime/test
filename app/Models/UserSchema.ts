@@ -1,8 +1,9 @@
 import mongoose, { Document, Schema } from "mongoose";
+
 const userSchema = new mongoose.Schema(
   {
-    clerkUserId: { type: String, unique: true, required: true },
-    emailAddress: { type: String, required: true },
+    userId: { type: String, unique: true, required: true, default: "demo-user" },
+    emailAddress: { type: String, required: true, default: "demo@example.com" },
   },
   { timestamps: true }
 );

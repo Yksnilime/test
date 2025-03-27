@@ -17,7 +17,6 @@ import {
 } from "./app/Types";
 import { v4 as uuidv4 } from "uuid";
 import StyleOutlinedIcon from "@mui/icons-material/StyleOutlined";
-import { useUser } from "@clerk/nextjs";
 
 interface GlobalContextType {
   sharedUserIdObject: {
@@ -249,7 +248,6 @@ export default function GlobalContextProvider({
       isSelected: false,
       icons: <FavoriteBorderIcon sx={{ fontSize: 18 }} />,
     },
-
     {
       id: 3,
       name: "Trash",
@@ -306,19 +304,12 @@ export default function GlobalContextProvider({
   const [tagsClicked, setTagsClicked] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  const { isLoaded, isSignedIn, user } = useUser();
   const [sharedUserId, setSharedUserId] = useState<string>("");
   const [showPlaceHolder, setShowPlaceHolder] = useState(false);
 
   const handleResize = () => {
     setIsMobile(window.innerWidth <= 640);
   };
-
-  useEffect(() => {
-    if (user) {
-      setSharedUserId(user?.id);
-    }
-  }, [isLoaded, user]);
 
   useEffect(() => {
     // Check window size on initial render
@@ -336,7 +327,7 @@ export default function GlobalContextProvider({
   useEffect(() => {
     async function fetchAllNotes() {
       try {
-        const response = await fetch(`/api/snippets?clerkId=${user?.id}`);
+        const response = await fetch(`/api/snippets?userId=demo-user`);
         if (!response.ok) {
           throw new Error("Failed to fetch snippets");
         }
@@ -361,7 +352,7 @@ export default function GlobalContextProvider({
 
     async function fetchAllTags() {
       try {
-        const response = await fetch(`/api/tags?clerkId=${user?.id}`);
+        const response = await fetch(`/api/tags?userId=demo-user`);
         if (!response.ok) {
           throw new Error("Failed to fetch tags");
         }
@@ -370,7 +361,7 @@ export default function GlobalContextProvider({
           const allTag: SingleTagType = {
             _id: uuidv4(),
             name: "All",
-            clerkUserId: user?.id || "",
+            userId: "demo-user",
           };
 
           const tempAllTags = [allTag, ...data.tags];
@@ -384,11 +375,9 @@ export default function GlobalContextProvider({
       }
     }
 
-    if (isLoaded && isSignedIn) {
-      fetchAllTags();
-      fetchAllNotes();
-    }
-  }, [user, isLoaded, isSignedIn]);
+    fetchAllTags();
+    fetchAllNotes();
+  }, []);
 
   useEffect(() => {
     setSelectedTags(selectedNote?.tags || []);
@@ -536,7 +525,7 @@ export async function updateNoteInDb(note: SingleNoteType) {
       body: JSON.stringify({
         title: note.title,
         isFavorite: note.isFavorite,
-        clerkUserId: note.clerkUserId,
+        userId: note.userId,
         tags: note.tags,
         description: note.description,
         code: note.code,

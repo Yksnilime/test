@@ -2,10 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Hubot Sans';
+  src: url('https://github.com/github/hubot-sans/raw/main/fonts/hubot-sans.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --font-hubot-sans: 'Hubot Sans', system-ui, -apple-system, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,6 +27,7 @@
 
 body {
   color: rgb(var(--foreground-rgb));
+  font-family: var(--font-hubot-sans);
 }
 
 .poppins {

@@ -178,6 +178,7 @@ function ButtonGroup({
     allNotesObject: { allNotes, setAllNotes },
     tagsClickedObject: { tagsClicked, setTagsClicked },
     sharedUserIdObject: { sharedUserId },
+    darkModeObject: { darkMode },
   } = useGlobalContext();
 
   function handleClickedTag() {
@@ -225,13 +226,17 @@ function ButtonGroup({
           setOpenNewTagsWindow(false);
           setSelectedTagToEdit(null);
         }}
-        className="px-4 py-2  text-slate-600 border rounded-md hover:bg-slate-100"
+        className="px-4 py-2 text-slate-600 border rounded-full hover:bg-slate-100 transition-colors"
       >
         Cancel
       </button>
       <button
         onClick={handleClickedTag}
-        className="px-4 py-2   text-white bg-purple-600 rounded-md hover:bg-purple-700"
+        className={`px-4 py-2 rounded-full transition-colors ${
+          darkMode[1].isSelected 
+            ? "text-slate-900 bg-white/85 hover:bg-white" 
+            : "text-white bg-[#092C4C] hover:bg-[#0A3459]"
+        }`}
       >
         {selectedTagToEdit ? "Edit Tag" : "Add Tag"}
       </button>
@@ -247,7 +252,7 @@ async function addNewTagFunction(
 ) {
   const newTag = {
     name: tagName,
-    clerkUserId: sharedUserId || "",
+    userId: "demo-user",
   };
 
   try {
@@ -260,27 +265,18 @@ async function addNewTagFunction(
     });
 
     if (!response.ok) {
-      throw new Error("Failed to add tag");
+      throw new Error("Failed to create tag");
     }
 
     const data = await response.json();
+    const createdTag = data.tag;
 
-    if (data.error) {
-      throw new Error(data.error);
-    }
-
-    const addedTag: SingleTagType = {
-      _id: data.tags._id,
-      name: data.tags.name,
-      clerkUserId: data.tags.clerkUserId,
-    };
-
-    setAllTags((prevTags) => [...prevTags, addedTag]);
+    setAllTags((prevTags) => [...prevTags, createdTag]);
     setOpenNewTagsWindow(false);
-    toast.success("Tag has been added successfully");
+    toast.success("Tag created successfully!");
   } catch (error) {
-    console.error("Error adding new tag:", error);
-    toast.error(error instanceof Error ? error.message : "Failed to add tag");
+    console.error("Error creating tag:", error);
+    toast.error("Failed to create tag");
   }
 }
 
@@ -332,68 +328,46 @@ async function handleEditTag(
   setAllNotes: (value: React.SetStateAction<SingleNoteType[]>) => void
 ) {
   try {
-    // Step 1: Update tag in the database
-    const updateTagResponse = await fetch(
-      `/api/tags?tagId=${selectedTagToEdit._id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name: newTagName }),
-      }
-    );
+    const response = await fetch("/api/tags", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        _id: selectedTagToEdit._id,
+        name: newTagName,
+        userId: "demo-user",
+      }),
+    });
 
-    if (!updateTagResponse.ok) {
-      const errorData = await updateTagResponse.json();
-      throw new Error(errorData.message || "Failed to update tag");
+    if (!response.ok) {
+      throw new Error("Failed to update tag");
     }
 
-    // Step 2: Update all notes that contain this tag
-    const notesToUpdate = allNotes.filter((note) =>
-      note.tags.some(
-        (t) => t.name.toLowerCase() === selectedTagToEdit.name.toLowerCase()
+    const data = await response.json();
+    const updatedTag = data.tag;
+
+    // Update the tag in allTags state
+    setAllTags((prevTags) =>
+      prevTags.map((tag) =>
+        tag._id === selectedTagToEdit._id ? updatedTag : tag
       )
     );
 
-    const updatePromises = notesToUpdate.map((note) =>
-      updateNote(note, selectedTagToEdit.name, newTagName)
-    );
-
-    const updatedNotes = await Promise.all(updatePromises);
-
-    // Step 3: Update local state
-    const updatedAllTags = allTags.map((tag) =>
-      tag._id === selectedTagToEdit._id ? { ...tag, name: newTagName } : tag
-    );
-
-    const updatedAllNotes = allNotes.map((note) => {
-      const updatedNote = updatedNotes.find((un) => un._id === note._id);
-      if (updatedNote) {
-        return updatedNote;
-      }
-      return {
-        ...note,
-        tags: note.tags.map((tag) =>
-          tag.name.toLowerCase() === selectedTagToEdit.name.toLowerCase()
-            ? { ...tag, name: newTagName }
-            : tag
-        ),
-      };
+    // Update the tag in all notes
+    const updatedNotes = allNotes.map((note) => {
+      const updatedTags = note.tags.map((tag) =>
+        tag._id === selectedTagToEdit._id ? updatedTag : tag
+      );
+      return { ...note, tags: updatedTags };
     });
 
-    setAllTags(updatedAllTags);
-    setAllNotes(updatedAllNotes);
+    setAllNotes(updatedNotes);
     setOpenNewTagsWindow(false);
     setSelectedTagToEdit(null);
-
-    toast.success("Tag has been updated successfully");
+    toast.success("Tag updated successfully!");
   } catch (error) {
     console.error("Error updating tag:", error);
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : "Failed to update tag or related notes"
-    );
+    toast.error("Failed to update tag");
   }
 }

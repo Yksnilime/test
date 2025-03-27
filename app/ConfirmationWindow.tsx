@@ -1,57 +1,17 @@
-import { useGlobalContext } from "@/ContextApi";
 import React from "react";
-import toast from "react-hot-toast";
+import { useGlobalContext } from "@/ContextApi";
 
-function ConfirmationWindow() {
+export default function ConfirmationWindow({
+  text,
+  onConfirm,
+}: {
+  text: string;
+  onConfirm: () => void;
+}) {
   const {
-    openConfirmationWindowObject: {
-      openConfirmationWindow,
-      setOpenConfirmationWindow,
-    },
-
-    allNotesObject: { allNotes, setAllNotes },
-    selectedNoteObject: { selectedNote, setSelectedNote },
+    openConfirmationWindowObject: { openConfirmationWindow, setOpenConfirmationWindow },
     darkModeObject: { darkMode },
   } = useGlobalContext();
-
-  const [isDeleting, setIsDeleting] = React.useState(false);
-
-  async function deleteTheSnippet() {
-    if (selectedNote) {
-      setIsDeleting(true);
-      try {
-        const response = await fetch(
-          `/api/snippets?snippetId=${selectedNote._id}`,
-          {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        // If the delete request was successful, update the local state
-        const copyAllNotes = [...allNotes];
-        const updateAllNotes = copyAllNotes.filter(
-          (note) => note._id !== selectedNote._id
-        );
-        setAllNotes(updateAllNotes);
-        setOpenConfirmationWindow(false);
-        setSelectedNote(null); // Use undefined for consistency
-
-        toast.success("Snippet has been deleted");
-      } catch (error) {
-        console.error("Error deleting snippet:", error);
-        toast.error("Failed to delete snippet. Please try again.");
-      } finally {
-        setIsDeleting(false);
-      }
-    }
-  }
 
   return (
     <div
@@ -60,36 +20,44 @@ function ConfirmationWindow() {
         right: "0",
         marginLeft: "auto",
         marginRight: "auto",
-        top: "30%",
-        transform: "translateY(-50%)",
+        top: "100px",
       }}
-      className={`shadow-md rounded-md md:w-[450px] w-[310px] ${openConfirmationWindow ? "fixed" : "hidden"} ${darkMode[1].isSelected ? "bg-slate-800 text-white" : "bg-white"}   py-8 pt-10  p-3  z-50  flex flex-col gap-2 items-center   `}
+      className={`${
+        openConfirmationWindow ? "fixed" : "hidden"
+      } max-sm:w-[350px] w-[500px] shadow-md ${
+        darkMode[1].isSelected ? "bg-slate-800 text-white" : "bg-white border"
+      } z-50 p-6 rounded-lg`}
     >
-      <span className="font-bold text-xl"> {`Are you sure?`}</span>
-      <span className="text-center text-[13px] opacity-75 px-8">
-        Are you sure you want to delete this snippet? This action cannot be
-        undone.
-      </span>
-      <div className="flex gap-2 mt-5">
+      <div className="text-center">
+        <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+          Confirm Action
+        </h3>
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          {text}
+        </p>
+      </div>
+
+      <div className="mt-6 flex justify-end gap-3">
         <button
-          onClick={() => {
-            setOpenConfirmationWindow(false);
-            setSelectedNote(null);
-          }}
-          className=" border text-[12px]   w-full px-10  p-3   rounded-md   "
+          onClick={() => setOpenConfirmationWindow(false)}
+          className="px-4 py-2 text-sm text-slate-600 hover:text-slate-700 border rounded-full transition-colors"
         >
           Cancel
         </button>
         <button
-          onClick={deleteTheSnippet}
-          disabled={isDeleting}
-          className={`  w-full px-10 text-[12px]    p-3 text-white rounded-md bg-purple-600`}
+          onClick={() => {
+            onConfirm();
+            setOpenConfirmationWindow(false);
+          }}
+          className={`px-4 py-2 text-sm rounded-full transition-colors ${
+            darkMode[1].isSelected
+              ? "bg-white/85 text-slate-900 hover:bg-white"
+              : "bg-[#092C4C] text-white hover:bg-[#0A3459]"
+          }`}
         >
-          {isDeleting ? "Deleting..." : "Delete"}
+          Confirm
         </button>
       </div>
     </div>
   );
 }
-
-export default ConfirmationWindow;

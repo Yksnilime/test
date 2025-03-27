@@ -126,7 +126,17 @@ export default function SwiperSelection() {
             {allTags.map((tag, index) => (
               <SwiperSlide
                 key={index}
-                className={`${tagsSelected[index] ? "bg-purple-600 text-white" : `${darkMode[1].isSelected ? "bg-slate-800" : "bg-white"} hover:text-purple-600   text-gray-400`}   p-1 rounded-md  `}
+                className={`${
+                  tagsSelected[index]
+                    ? darkMode[1].isSelected
+                      ? "bg-white/85 text-slate-900"
+                      : "bg-[#092C4C] text-white"
+                    : `${
+                        darkMode[1].isSelected
+                          ? "bg-slate-800"
+                          : "bg-white"
+                      } hover:text-[#092C4C] text-gray-400`
+                } p-1 rounded-full transition-colors`}
                 onClick={() => handleTagClick(index)}
               >
                 {tag.name}
@@ -137,7 +147,11 @@ export default function SwiperSelection() {
       </div>
       <button
         onClick={() => setOpenNewTagsWindow(true)}
-        className="bg-purple-600 p-1 rounded-md px-3 flex gap-1 items-center text-white text-sm"
+        className={`flex gap-1 text-[13px] p-[6px] px-4 rounded-full items-center cursor-pointer select-none transition-colors ${
+          darkMode[1].isSelected
+            ? "bg-white/85 text-slate-900 hover:bg-white"
+            : "bg-[#092C4C] text-white hover:bg-[#0A3459]"
+        }`}
       >
         <AddOutlinedIcon sx={{ fontSize: 18 }} />
         <span>Tag</span>

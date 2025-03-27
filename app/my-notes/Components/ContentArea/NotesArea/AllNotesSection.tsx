@@ -34,6 +34,7 @@ function AllNotesSection() {
     isLoadingObject: { isLoading },
     showPlaceHolderObject: { showPlaceHolder },
     selectedNoteObject: { selectedNote, setSelectedNote },
+    darkModeObject: { darkMode },
   } = useGlobalContext();
 
   const filterIsTrashedNotes = allNotes.filter(
@@ -418,6 +419,7 @@ function NoteHeader({
     selectedNoteObject: { setSelectedNote, selectedNote },
     isNewNoteObject: { setIsNewNote },
     searchQueryObject: { setSearchQuery },
+    darkModeObject: { darkMode },
   } = useGlobalContext();
 
   function clickedNoteTitle() {
@@ -476,7 +478,11 @@ function NoteHeader({
     <div className="flex  justify-between   items-center     mx-4 ">
       <span
         onClick={() => clickedNoteTitle()}
-        className={`font-bold text-lg  w-[90%]     cursor-pointer hover:text-purple-600 `}
+        className={`font-bold text-lg  w-[90%]     cursor-pointer ${
+          darkMode[1].isSelected 
+            ? "text-white hover:text-white/85" 
+            : "text-slate-700 hover:text-[#092C4C]"
+        }`}
       >
         {truncateString(title, 60)}
       </span>
@@ -487,7 +493,7 @@ function NoteHeader({
             <FavoriteBorderOutlinedIcon className="text-slate-400 cursor-pointer" />
           }
           checkedIcon={
-            <FavoriteIcon className="text-purple-600 cursor-pointer" />
+            <FavoriteIcon className={`${darkMode[1].isSelected ? "text-white/85" : "text-[#092C4C]"} cursor-pointer`} />
           }
           checked={isFavorite}
           onClick={handleClickedCheckbox}
@@ -498,12 +504,18 @@ function NoteHeader({
 }
 
 function NoteTags({ tags }: { tags: SingleTagType[] }) {
+  const { darkModeObject: { darkMode } } = useGlobalContext();
+  
   return (
     <div className="text-slate-500 text-[11px] mx-4 flex-wrap flex    gap-1 mt-4 ">
       {tags.map((tag, index) => (
         <span
           key={index}
-          className="bg-purple-100 text-purple-600 p-1 rounded-md px-2"
+          className={`p-1 rounded-md px-2 ${
+            darkMode[1].isSelected
+              ? "bg-slate-700 text-white/85"
+              : "bg-[#092C4C]/10 text-[#092C4C]"
+          }`}
         >
           {tag.name}
         </span>

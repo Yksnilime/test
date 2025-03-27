@@ -19,6 +19,7 @@ function EmptyPlaceHolder({
     selectedNoteObject: { selectedNote, setSelectedNote },
     openContentNoteObject: { openContentNote, setOpenContentNote },
     sharedUserIdObject: { sharedUserId },
+    darkModeObject: { darkMode },
   } = useGlobalContext();
   return (
     <div className="  w-full h-[510px] pt-20 flex gap-3 flex-col items-center  ">
@@ -34,10 +35,14 @@ function EmptyPlaceHolder({
               sharedUserId
             )
           }
-          className="bg-purple-600 p-[8px] pr-2  text-sm text-white rounded-md mt-2 justify-center items-center"
+          className={`flex items-center gap-1 text-[13px] p-[6px] px-4 rounded-full cursor-pointer select-none transition-colors ${
+            darkMode[1].isSelected
+              ? "bg-white/85 text-slate-900 hover:bg-white"
+              : "bg-[#092C4C] text-white hover:bg-[#0A3459]"
+          }`}
         >
-          <AddOutlinedIcon sx={{ fontSize: 17, color: "white" }} />
-          <span className="ml-1 mr-2">Add a new snippet</span>
+          <AddOutlinedIcon sx={{ fontSize: 17 }} />
+          <span>Add a new snippet</span>
         </button>
       )}
     </div>
@@ -67,19 +72,28 @@ export function OpenTheContentNote(
   }
 
   // Creating an new note
-  const newSingleNote: SingleNoteType = {
+  const newNote: SingleNoteType = {
     _id: uuidv4(),
-    clerkUserId: sharedUserId || "",
-    title: "",
-    creationDate: formatDate(new Date()),
-    tags: [],
-    description: "",
-    code: "",
+    title: "Welcome to Snippet Master!",
+    description: "Create your first code snippet by clicking the + button above.",
+    code: `// Your code here
+function example() {
+  console.log("Hello, World!");
+}`,
+    language: "javascript",
+    tags: [
+      {
+        _id: uuidv4(),
+        name: "Getting Started",
+        userId: "demo-user",
+      },
+    ],
+    userId: "demo-user",
+    creationDate: new Date().toISOString(),
     isFavorite: false,
-    language: "Javascript",
     isTrash: false,
   };
   setIsNewNote(true);
-  setSelectedNote(newSingleNote);
+  setSelectedNote(newNote);
   setOpenContentNote(true);
 }

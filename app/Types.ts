@@ -18,15 +18,15 @@ export interface DarkModeType {
 
 export interface SingleTagType {
   _id: string;
-  clerkUserId: string;
   name: string;
+  userId: string;
 }
 
 export interface SingleNoteType {
   _id: string;
-  clerkUserId: string;
   title: string;
   isFavorite: boolean;
+  userId: string;
   tags: SingleTagType[];
   description: string;
   code: string;

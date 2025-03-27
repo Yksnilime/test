@@ -1,138 +1,105 @@
-import connect from "@/app/lib/connect";
-
-import SnippetM from "@/app/Models/SnippetSchema";
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
+import SnippetM from "@/app/Models/SnippetSchema";
+
+const MONGODB_URI = process.env.MONGODB_URI || "";
+
+if (!MONGODB_URI) {
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env.local"
+  );
+}
+
 export async function POST(req: Request) {
   try {
-    const {
+    await mongoose.connect(MONGODB_URI);
+    const { title, description, code, language, tags } = await req.json();
+
+    const note = await SnippetM.create({
       title,
-      isFavorite,
-      clerkUserId,
-      tags,
       description,
       code,
       language,
-      creationDate,
-      isTrash,
-    } = await req.json();
-
-    await connect();
-
-    const note = new SnippetM({
-      title,
-      isFavorite,
-      clerkUserId,
       tags,
-      description,
-      code,
-      language,
-      creationDate,
-      isTrash,
+      userId: "demo-user",
+      creationDate: new Date().toISOString(),
+      isFavorite: false,
+      isTrash: false,
     });
 
-    const savedNote = await note.save();
-
-    return NextResponse.json({ notes: savedNote });
-  } catch (error) {
-    console.log(error);
-
-    return NextResponse.json({ error: error }, { status: 400 });
+    return NextResponse.json({ note });
+  } catch (error: any) {
+    return NextResponse.json({ error }, { status: 500 });
   }
 }
 
-export async function GET(req: any) {
+export async function GET(req: Request) {
   try {
-    const clerkId = req.nextUrl.searchParams.get("clerkId");
-    await connect();
-    const notes = await SnippetM.find({ clerkUserId: clerkId });
-    return NextResponse.json({ notes: notes });
-  } catch (error) {
-    return NextResponse.json({ error: error }, { status: 400 });
-  }
-}
+    await mongoose.connect(MONGODB_URI);
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId") || "demo-user";
+    const snippetId = searchParams.get("snippetId");
 
-export async function PUT(request: any) {
-  try {
-    const snippetId = request.nextUrl.searchParams.get("snippetId");
-    const {
-      title,
-      isFavorite,
-      clerkUserId,
-      tags,
-      description,
-      code,
-      language,
-      creationDate,
-      isTrash,
-    } = await request.json();
-
-    if (!snippetId) {
-      return NextResponse.json(
-        { message: "Snippet ID is required" },
-        { status: 400 }
-      );
+    if (snippetId) {
+      const note = await SnippetM.findById(snippetId);
+      return NextResponse.json({ note });
     }
 
-    // Connect to the database
-    await connect();
+    const notes = await SnippetM.find({ userId });
 
-    // Find the snippet by snippet and update it
-    const updatedSnippet = await SnippetM.findOneAndUpdate(
-      { _id: snippetId },
+    return NextResponse.json({ notes });
+  } catch (error: any) {
+    return NextResponse.json({ error }, { status: 500 });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    await mongoose.connect(MONGODB_URI);
+    const { searchParams } = new URL(req.url);
+    const snippetId = searchParams.get("snippetId");
+
+    if (!snippetId) {
+      return NextResponse.json({ error: "Snippet ID is required" }, { status: 400 });
+    }
+
+    const { title, description, code, language, tags, isFavorite, isTrash } = await req.json();
+
+    const note = await SnippetM.findByIdAndUpdate(
+      snippetId,
       {
-        $set: {
-          title,
-          isFavorite,
-          clerkUserId,
-          tags,
-          description,
-          code,
-          language,
-          creationDate,
-          isTrash,
-        },
+        title,
+        description,
+        code,
+        language,
+        tags,
+        isFavorite,
+        isTrash,
+        userId: "demo-user",
       },
-      { returnDocument: "after" } // Return the updated document
+      { new: true }
     );
 
-    console.log(updatedSnippet);
-
-    return NextResponse.json({
-      note: updatedSnippet,
-    });
-  } catch (error) {
-    console.error("Error updating snippet:", error);
-    return NextResponse.json({ status: 500 });
+    return NextResponse.json({ note });
+  } catch (error: any) {
+    return NextResponse.json({ error }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(req: Request) {
   try {
-    const url = new URL(request.url);
-    const snippetId = url.searchParams.get("snippetId");
+    await mongoose.connect(MONGODB_URI);
+    const { searchParams } = new URL(req.url);
+    const snippetId = searchParams.get("snippetId");
 
     if (!snippetId) {
-      return NextResponse.json(
-        { message: "snippetId is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Snippet ID is required" }, { status: 400 });
     }
 
-    const snippetToDelete = await SnippetM.findOneAndDelete({ _id: snippetId });
-
-    if (!snippetToDelete) {
-      return NextResponse.json(
-        { message: "Snippet not found" },
-        { status: 404 }
-      );
-    }
+    await SnippetM.findByIdAndDelete(snippetId);
 
     return NextResponse.json({ message: "Snippet deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting snippet:", error); // Log the error for debugging
-    return NextResponse.json(
-      { message: "Failed to delete snippet" },
-      { status: 500 }
-    );
+  } catch (error: any) {
+    return NextResponse.json({ error }, { status: 500 });
   }
 }
